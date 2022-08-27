@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:rest_api/models/post_model.dart';
+import 'package:rest_api/models/photo_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -12,21 +12,40 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Post> postsList = [];
-  Future<List<Post>> getPost() async {
-    const url = "https://jsonplaceholder.typicode.com/posts";
+  List<Photo> photosList = [];
+
+  // Future<List<Post>> getPost() async {
+  //   const url = "https://jsonplaceholder.typicode.com/posts";
+  //   final response = await http.get(Uri.parse(url));
+  //   final data = jsonDecode(response.body);
+
+  //   if (response.statusCode == 200) {
+  //     for (Map i in data) {
+  //       postsList.add(Post.fromJson(i as Map<String, dynamic>));
+  //     }
+
+  //     return postsList;
+  //   }
+
+  //   return postsList;
+  // }
+
+  Future<List<Photo>> getPhotos() async {
+    const url = "https://jsonplaceholder.typicode.com/photos";
     final response = await http.get(Uri.parse(url));
-    final data = jsonDecode(response.body);
+    final data = jsonDecode(response.body.toString());
 
     if (response.statusCode == 200) {
       for (Map i in data) {
-        postsList.add(Post.fromJson(i as Map<String, dynamic>));
+        Photo photo = Photo(id: i["id"], title: i["title"], url: i["url"]);
+
+        photosList.add(photo);
       }
 
-      return postsList;
+      return photosList;
     }
 
-    return postsList;
+    return photosList;
   }
 
   @override
@@ -38,8 +57,8 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Expanded(
               child: FutureBuilder(
-                future: getPost(),
-                builder: ((context, snapshot) {
+                future: getPhotos(),
+                builder: ((context, AsyncSnapshot<List<Photo>> snapshot) {
                   if (!snapshot.hasData) {
                     return const Center(
                       child: CircularProgressIndicator(),
@@ -47,17 +66,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   } else {
                     return ListView.builder(
                       itemBuilder: (context, index) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(" ${index + 1} :  ${postsList[index].title}"),
-                            const SizedBox(
-                              height: 20,
-                            )
-                          ],
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundImage: NetworkImage(
+                                snapshot.data![index].url.toString()),
+                          ),
+                          subtitle: Text(snapshot.data![index].id.toString()),
+                          title: Text(snapshot.data![index].title.toString()),
                         );
                       },
-                      itemCount: postsList.length,
+                      itemCount: photosList.length,
                     );
                   }
                 }),
