@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:rest_api/models/photo_model.dart';
+import 'package:rest_api/models/user_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -12,40 +12,22 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<Photo> photosList = [];
+  List<User> usersList = [];
 
-  // Future<List<Post>> getPost() async {
-  //   const url = "https://jsonplaceholder.typicode.com/posts";
-  //   final response = await http.get(Uri.parse(url));
-  //   final data = jsonDecode(response.body);
-
-  //   if (response.statusCode == 200) {
-  //     for (Map i in data) {
-  //       postsList.add(Post.fromJson(i as Map<String, dynamic>));
-  //     }
-
-  //     return postsList;
-  //   }
-
-  //   return postsList;
-  // }
-
-  Future<List<Photo>> getPhotos() async {
-    const url = "https://jsonplaceholder.typicode.com/photos";
+  Future<List<User>> getUsers() async {
+    const url = "https://jsonplaceholder.typicode.com/users";
     final response = await http.get(Uri.parse(url));
-    final data = jsonDecode(response.body.toString());
+    final data = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
       for (Map i in data) {
-        Photo photo = Photo(id: i["id"], title: i["title"], url: i["url"]);
-
-        photosList.add(photo);
+        usersList.add(User.fromJson(i as dynamic));
       }
 
-      return photosList;
+      return usersList;
     }
 
-    return photosList;
+    return usersList;
   }
 
   @override
@@ -57,8 +39,8 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Expanded(
               child: FutureBuilder(
-                future: getPhotos(),
-                builder: ((context, AsyncSnapshot<List<Photo>> snapshot) {
+                future: getUsers(),
+                builder: ((context, AsyncSnapshot<List<User>> snapshot) {
                   if (!snapshot.hasData) {
                     return const Center(
                       child: CircularProgressIndicator(),
@@ -66,16 +48,46 @@ class _HomeScreenState extends State<HomeScreen> {
                   } else {
                     return ListView.builder(
                       itemBuilder: (context, index) {
-                        return ListTile(
-                          leading: CircleAvatar(
-                            backgroundImage: NetworkImage(
-                                snapshot.data![index].url.toString()),
+                        return Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ReuseableRow(
+                                  title: 'Name',
+                                  value: snapshot.data![index].name.toString(),
+                                ),
+                                ReuseableRow(
+                                  title: 'Username',
+                                  value:
+                                      snapshot.data![index].username.toString(),
+                                ),
+                                ReuseableRow(
+                                  title: 'Email',
+                                  value: snapshot.data![index].email.toString(),
+                                ),
+                                ReuseableRow(
+                                  title: 'Latitude',
+                                  value: snapshot.data![index].address.geo.lat
+                                      .toString(),
+                                ),
+                                ReuseableRow(
+                                  title: 'Longitude',
+                                  value: snapshot.data![index].address.geo.lng
+                                      .toString(),
+                                ),
+                                ReuseableRow(
+                                  title: 'City',
+                                  value: snapshot.data![index].address.city
+                                      .toString(),
+                                ),
+                              ],
+                            ),
                           ),
-                          subtitle: Text(snapshot.data![index].id.toString()),
-                          title: Text(snapshot.data![index].title.toString()),
                         );
                       },
-                      itemCount: photosList.length,
+                      itemCount: usersList.length,
                     );
                   }
                 }),
@@ -83,6 +95,27 @@ class _HomeScreenState extends State<HomeScreen> {
             )
           ],
         ),
+      ),
+    );
+  }
+}
+
+class ReuseableRow extends StatelessWidget {
+  final String title;
+  final String value;
+  const ReuseableRow({Key? key, required this.title, required this.value})
+      : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title),
+          Text(value),
+        ],
       ),
     );
   }
