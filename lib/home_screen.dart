@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:rest_api/models/products_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -11,15 +12,16 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  var data;
-
-  Future<void> getUsers() async {
-    const url = "https://jsonplaceholder.typicode.com/users";
+  Future<Products> getProducts() async {
+    const url = "https://webhook.site/92960c13-bc4d-4224-b286-1cd26d7b7ea3";
     final response = await http.get(Uri.parse(url));
+    final data = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
-      data = jsonDecode(response.body.toString());
+      return Products.fromJson(data);
     }
+
+    return Products.fromJson(data);
   }
 
   @override
@@ -30,8 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
-              child: FutureBuilder(
-                future: getUsers(),
+              child: FutureBuilder<Products>(
+                future: getProducts(),
                 builder: ((context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
@@ -40,42 +42,56 @@ class _HomeScreenState extends State<HomeScreen> {
                   } else {
                     return ListView.builder(
                       itemBuilder: (context, index) {
-                        return Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                ReuseableRow(
-                                  title: 'Name',
-                                  value: data[index]["name"],
+                        return Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ListTile(
+                                title: Text(
+                                  snapshot.data!.data[index].shop!.name
+                                      .toString(),
                                 ),
-                                ReuseableRow(
-                                  title: 'Username',
-                                  value: data[index]["username"],
+                                subtitle: Text(
+                                  snapshot.data!.data[index].shop!.shopemail
+                                      .toString(),
                                 ),
-                                ReuseableRow(
-                                  title: 'Email',
-                                  value: data[index]["email"],
-                                ),
-                                ReuseableRow(
-                                  title: 'Latitude',
-                                  value: data[index]["address"]["geo"]["lat"],
-                                ),
-                                ReuseableRow(
-                                  title: 'Longitude',
-                                  value: data[index]["address"]["geo"]["lng"],
-                                ),
-                                ReuseableRow(
-                                  title: 'City',
-                                  value: data[index]["address"]["city"],
-                                ),
-                              ],
-                            ),
+                                leading: CircleAvatar(
+                                    backgroundImage: NetworkImage(
+                                  snapshot.data!.data[index].shop!.image
+                                      .toString(),
+                                )),
+                              ),
+                              SizedBox(
+                                height: MediaQuery.of(context).size.height * .3,
+                                width: MediaQuery.of(context).size.width * 1,
+                                child: ListView.builder(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: snapshot
+                                        .data?.data[index].images?.length,
+                                    itemBuilder: ((context, position) {
+                                      return Container(
+                                        height:
+                                            MediaQuery.of(context).size.height *
+                                                .3,
+                                        width:
+                                            MediaQuery.of(context).size.width *
+                                                .5,
+                                        decoration: BoxDecoration(
+                                            image: DecorationImage(
+                                                image: NetworkImage(snapshot
+                                                    .data
+                                                    ?.data[index]
+                                                    .images?[position]
+                                                    .url as String))),
+                                      );
+                                    })),
+                              )
+                            ],
                           ),
                         );
                       },
-                      itemCount: data.length,
+                      itemCount: snapshot.data?.data.length,
                     );
                   }
                 }),
@@ -83,27 +99,6 @@ class _HomeScreenState extends State<HomeScreen> {
             )
           ],
         ),
-      ),
-    );
-  }
-}
-
-class ReuseableRow extends StatelessWidget {
-  final String title;
-  final String value;
-  const ReuseableRow({Key? key, required this.title, required this.value})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(title),
-          Text(value),
-        ],
       ),
     );
   }
