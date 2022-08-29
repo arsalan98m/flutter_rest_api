@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:rest_api/models/user_model.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -12,22 +11,15 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<User> usersList = [];
+  var data;
 
-  Future<List<User>> getUsers() async {
+  Future<void> getUsers() async {
     const url = "https://jsonplaceholder.typicode.com/users";
     final response = await http.get(Uri.parse(url));
-    final data = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
-      for (Map i in data) {
-        usersList.add(User.fromJson(i as dynamic));
-      }
-
-      return usersList;
+      data = jsonDecode(response.body.toString());
     }
-
-    return usersList;
   }
 
   @override
@@ -40,8 +32,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: FutureBuilder(
                 future: getUsers(),
-                builder: ((context, AsyncSnapshot<List<User>> snapshot) {
-                  if (!snapshot.hasData) {
+                builder: ((context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
                       child: CircularProgressIndicator(),
                     );
@@ -56,38 +48,34 @@ class _HomeScreenState extends State<HomeScreen> {
                               children: [
                                 ReuseableRow(
                                   title: 'Name',
-                                  value: snapshot.data![index].name.toString(),
+                                  value: data[index]["name"],
                                 ),
                                 ReuseableRow(
                                   title: 'Username',
-                                  value:
-                                      snapshot.data![index].username.toString(),
+                                  value: data[index]["username"],
                                 ),
                                 ReuseableRow(
                                   title: 'Email',
-                                  value: snapshot.data![index].email.toString(),
+                                  value: data[index]["email"],
                                 ),
                                 ReuseableRow(
                                   title: 'Latitude',
-                                  value: snapshot.data![index].address.geo.lat
-                                      .toString(),
+                                  value: data[index]["address"]["geo"]["lat"],
                                 ),
                                 ReuseableRow(
                                   title: 'Longitude',
-                                  value: snapshot.data![index].address.geo.lng
-                                      .toString(),
+                                  value: data[index]["address"]["geo"]["lng"],
                                 ),
                                 ReuseableRow(
                                   title: 'City',
-                                  value: snapshot.data![index].address.city
-                                      .toString(),
+                                  value: data[index]["address"]["city"],
                                 ),
                               ],
                             ),
                           ),
                         );
                       },
-                      itemCount: usersList.length,
+                      itemCount: data.length,
                     );
                   }
                 }),
